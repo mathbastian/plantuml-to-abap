@@ -1,8 +1,8 @@
 # Figuras
-Na pasta /images.
+Na pasta `images`.
 
 # Demonstração
-Na pasta /demo.
+Na pasta `demo`.
 
 # Código fonte
-Na pasta /program.
+Na pasta `program`.
