@@ -1,0 +1,256 @@
+@startuml diagrama_A
+
+    '13 Interfaces
+    '23 Classes
+    '5 Enumeradores
+
+    title Diagrama A
+
+    skinparam linetype ortho
+
+    package Payroll {
+
+    }
+
+    interface lif_tax_calculator{
+        +calculate( ) : void
+    }
+    
+    class lcl_tax_calculator_a{
+        +{static}make( io_payroll_context : if_hrpaypt_payroll_context ) : lif_tax_calculator
+    }
+
+    class lcl_tax_calculator implements lif_tax_calculator{
+            -mo_payroll_context : if_hrpaypt_payroll_context
+            -mt_wt_calc_rule[] : lif_wt_calc_rule
+            +constructor( io_payroll_context : if_hrpaypt_payroll_context, it_wt_calc_rule[] : lif_wt_calc_rule )
+    }
+
+    interface lif_wt_calc_rule{
+        + calculate( ) : pc207
+    }
+
+    package Overtime_tax_Basis_for_period as "Tax Basis"{
+
+        class lcl_base_calculator implements lif_wt_calc_rule{
+            -mo_payroll_context : if_hrpaypt_payroll_context
+            -mo_base_getter_f : lif_base_getter_f
+            +constructor( io_payroll_context : if_hrpaypt_payroll_context, io_base_getter_f : lif_base_getter_f )
+        }
+        package overtime_getter_factory as "getter factory"{ 
+            interface lif_base_getter_f{
+                build( ) : lif_base_getter
+            }
+
+            class lcl_cumulation_base_getter_f implements lif_base_getter_f{
+                -mo_has_cumulation : lif_has_cumulation
+                -mo_is_prev_month_limit_reached : lif_is_prev_month_lim_reached
+                +constructor( io_has_cumulation : lif_has_cumulation, io_is_prev_month_limit_reached : lif_is_prev_month_lim_reached )
+            }
+            interface lif_is_prev_month_lim_reached{
+                is( ) : abap_bool
+            }
+
+            class lcl_is_prev_month_lim_reached implements lif_is_prev_month_lim_reached {
+                -mo_payroll_context : if_hrpaypt_payroll_context
+                +constructor( io_payroll_context : if_hrpaypt_payroll_context )
+            }
+
+            interface lif_has_cumulation{
+                has() : abap_bool
+            }
+            class lcl_has_cumulation implements lif_has_cumulation{
+                -mo_payroll_context : if_hrpaypt_payroll_context
+                +constructor( io_payroll_context : if_hrpaypt_payroll_context )
+            }
+        }
+        package overtime_getter as "overtime getters"{
+            interface lif_base_getter{
+                get() : maxbt
+            }
+            class lcl_cumulation_base_getter implements lif_base_getter{
+                -mo_payroll_context : if_hrpaypt_payroll_context
+                +constructor( io_payroll_context : if_hrpaypt_payroll_context )
+            }
+
+            class lcl_hg_limit_getter implements lif_base_getter{
+                -mo_payroll_context : if_hrpaypt_payroll_context
+                +constructor( io_payroll_context : if_hrpaypt_payroll_context )
+            }
+
+            class lcl_low_limit_get_a{
+                +{static}make( io_payroll_context : if_hrpaypt_payroll_context ) : lif_base_getter
+            }
+            class lcl_lt_limit_getter implements lif_base_getter{
+                - mo_table_processor : lif_table_processor
+                - mo_is_limit_reached : lif_is_limit_reached
+                +constructor( io_table_processor : lif_table_processor, io_is_limit_reached : lif_is_limit_reached )
+            }
+
+            lcl_cumulation_base_getter_f --> lcl_low_limit_get_a : uses
+            lcl_low_limit_get_a ..> lcl_lt_limit_getter : returns
+            interface lif_is_limit_reached{
+                is( ) : abap_bool
+            }
+
+            class lcl_is_limit_reached implements lif_is_limit_reached {
+                - mo_payroll_context : if_hrpaypt_payroll_context
+                +constructor( io_payroll_context : if_hrpaypt_payroll_context )
+            }
+
+            interface lif_table_processor{
+                + process( ) : maxbt
+            }
+
+            class lcl_table_processor implements lif_table_processor{
+                - mo_payroll_context : if_hrpaypt_payroll_context
+                +constructor( io_payroll_context : if_hrpaypt_payroll_context )
+            }
+
+            interface lif_prev_month_limit_getter{
+                + get( ) : p_suml
+            }
+
+            class lcl_prev_month_limit_getter implements lif_prev_month_limit_getter {
+                - mo_payroll_context : if_hrpaypt_payroll_context
+                +constructor( io_payroll_context : if_hrpaypt_payroll_context )
+            }
+
+            class lcl_cumulator_updater implements lif_base_calculation_rule{
+                - mo_prev_month_limit_getter : lif_prev_month_limit_getter
+                +constructor( io_payroll_context : if_hrpaypt_payroll_context )
+            }
+
+            interface lif_base_calculation_rule{
+                + calculate( io_base_e : lif_base_e, is_current_overtime : PC2BF ) : void
+            }
+
+            class lcl_base_full_hours implements lif_base_calculation_rule{
+                - mo_prev_month_limit_getter : lif_prev_month_limit_getter
+                - mo_payroll_context : if_hrpaypt_payroll_context
+                - mo_basic_hour_getter : lif_basic_hour_getter
+                +constructor( io_prev_month_limit_getter : lif_prev_month_limit_getter, io_payroll_context : if_hrpaypt_payroll_context, io_basic_hour_getter : lif_basic_hour_getter )
+            }
+
+            class lcl_base_split_hours implements lif_base_calculation_rule{
+                - mo_prev_month_limit_getter : lif_prev_month_limit_getter
+                - mo_payroll_context : if_hrpaypt_payroll_context
+                - mo_basic_hour_getter : lif_basic_hour_getter
+                +constructor( io_prev_month_limit_getter : lif_prev_month_limit_getter, io_payroll_context : if_hrpaypt_payroll_context, io_basic_hour_getter : lif_basic_hour_getter )
+            }
+
+            interface lif_basic_hour_getter{
+                + get( ) : pc207
+            }
+
+            class lcl_basic_hour_getter implements lif_basic_hour_getter{
+                - mo_payroll_context : if_hrpaypt_payroll_context
+                +constructor( io_payroll_context : if_hrpaypt_payroll_context )
+            }
+
+            interface lif_base_e{
+                get_cumulator( ) : p_suml
+                get_base( ) : maxbt 
+                set_cumulator( iv_cumulator : p_suml ) : void
+                set_base( iv_base : maxbt ) : void
+            }
+
+            class lcl_base_e implements lif_base_e {
+                - mv_cumulator : anhzl 
+                - mv_base : maxbt
+            }
+                
+        }
+        
+    }
+
+    package wage_type_generator as "WT generation"{
+
+        class lcl_base_to_be_accounted implements lif_wt_calc_rule{
+            - mo_payroll_context : if_hrpaypt_payroll_context
+            - mo_must_read_from_actual : lif_must_read_from_actual
+            +constructor( io_payroll_context : if_hrpaypt_payroll_context, io_must_read_from_actual : lif_must_read_from_actual )
+        }
+
+        interface lif_must_read_from_actual{
+            + must( ) : abap_bool 
+        }
+        class lcl_must_read_from_actual implements lif_must_read_from_actual{
+            - mo_payroll_context : if_hrpaypt_payroll_context
+            +constructor( io_payroll_context : if_hrpaypt_payroll_context )
+        }
+
+        class lcl_informative_tax_wt implements lif_wt_calc_rule{
+            - mo_payroll_context : if_hrpaypt_payroll_context
+            +constructor( io_payroll_context : if_hrpaypt_payroll_context )
+        }
+
+        class lcl_tax_half_wt implements lif_wt_calc_rule{
+            - mo_payroll_context : if_hrpaypt_payroll_context
+            +constructor( io_payroll_context : if_hrpaypt_payroll_context )
+        }
+
+        class lcl_tax_wt implements lif_wt_calc_rule{
+            - mo_payroll_context : if_hrpaypt_payroll_context
+            +constructor( io_payroll_context : if_hrpaypt_payroll_context )
+        }
+
+    }
+
+    package enumerators as "enumerators"{
+            enum lce_base{
+                +gc_base_cumulator : 'BAOV'
+            }
+
+
+            enum lce_monthly_hours{
+                +gc_monthly_hours_base : 'MNTH'
+            }
+
+            enum lce_hour_limit{
+                +gc_yearly_limit_wage_type : 'YEAR'
+                +gc_yearly_hour_limit : '100'
+            }
+            enum lce_basic_hour{
+                +gc_base_hour_identifier : 'HRAM'
+            }
+
+            enum lce_tax_wage_types{
+                + gc_tributive_wage : '/10V' 
+                + gc_tax :  '/401'
+                + gc_tax_copy :  'K401'
+                + gc_half_tax : '/4OV'
+            }
+        }
+
+        lcl_cumulation_base_getter--> lce_base : uses
+        lcl_hg_limit_getter--> lce_monthly_hours : uses
+        lcl_has_cumulation--> lce_base : uses
+        lcl_base_calculator--> lif_base_getter : uses
+        lcl_base_calculator *-- "1..1" lif_base_getter_f : has
+        lcl_cumulation_base_getter_f *-- "1..1" lif_has_cumulation : has
+        lcl_cumulation_base_getter_f *-- "1..1" lif_is_prev_month_lim_reached : has
+        lif_base_getter_f..> "1..1" lif_base_getter :returns
+        lcl_is_prev_month_lim_reached --> lce_hour_limit : uses
+        lcl_lt_limit_getter *-- "1..1" lif_is_limit_reached : has
+        lcl_lt_limit_getter *-- "1..1" lif_table_processor : has
+        lcl_is_limit_reached --> lce_hour_limit : use
+        lcl_is_limit_reached --> lce_monthly_hours : use
+        lcl_cumulator_updater *-- "1..1" lif_prev_month_limit_getter : has
+        lif_base_calculation_rule --> lif_base_e : use
+        lcl_table_processor *-- "1..N" lif_base_calculation_rule : has
+        lcl_basic_hour_getter --> lce_basic_hour : use
+        lcl_base_full_hours *-- lif_basic_hour_getter : has
+        lcl_base_full_hours *-- lif_prev_month_limit_getter : has
+        lcl_base_split_hours *-- lif_basic_hour_getter : has
+        lcl_base_split_hours *-- lif_prev_month_limit_getter : has
+        lcl_tax_calculator  *-- "1..N" lif_wt_calc_rule : has
+        lcl_base_to_be_accounted *-- lif_must_read_from_actual : has
+        Payroll --> lif_tax_calculator : uses
+        lcl_base_to_be_accounted -->lce_tax_wage_types  : use
+        lcl_informative_tax_wt --> lce_tax_wage_types  : use
+        lcl_tax_half_wt--> lce_tax_wage_types  : use
+        lcl_tax_wt--> lce_tax_wage_types  : use
+        Payroll --> lcl_tax_calculator_a : uses
+        lcl_tax_calculator_a ..> lif_tax_calculator : returns
+@enduml
